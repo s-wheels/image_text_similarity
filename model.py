@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.Functional as F
+import torch.nn.functional as F
 
 class EmbeddingModel(nn.Module):
     def __init__(self, txt_features, img_features=2048, fc_features=2048, embed_dim=512):
