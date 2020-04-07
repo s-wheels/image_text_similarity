@@ -153,7 +153,7 @@ def main(epochs=20, batch_size=10):
             test_losses.append(accumlated_test_loss)
 
         print("-" * 50)
-        print("Duration of epoch: ", time.time() - epoch_start_time, "seconds") # print the time elapsed
+        print("Duration of epoch: ", time.time() - epoch_start_time, "seconds")
         print("Mean train loss: ", accumlated_train_loss.item() / num_batches)
         print("Mean test loss: ", accumlated_test_loss.item() / num_test_batches)
         print("-" * 50)
@@ -166,6 +166,23 @@ def main(epochs=20, batch_size=10):
 
 
 def get_triplet_bool(batch_size):
+    """
+    Calculate the triplet booleans for positive/negative relationships
+    between images and comments in batch.
+
+    Parameters
+    ----------
+    batch_size : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    pos_triplet_boolean_mask : torch.Tensor
+        Byte tensor with Trues for negative img-comment pairs.
+    neg_triplet_boolean_mask : torch.Tensor
+        Byte tensor with Trues for negative img-comment pairs.
+
+    """
     
     pos_triplet_boolean_mask = torch.zeros([batch_size, batch_size*5])
 
@@ -180,30 +197,76 @@ def get_triplet_bool(batch_size):
     
     return pos_triplet_boolean_mask.byte(), neg_triplet_boolean_mask.byte()
 
+
 def pdist_loss(img_embed, txt_embed):
+    """
+    Parameters
+    ----------
+    img_embed : torch.Tensor
+        [batch_size, 2048].
+    txt_embed : torch.Tensor
+        [batch_size*5, 100].
+
+    Returns
+    -------
+    pdist : torch.Tensor
+        Pairwise distances between embeddings.
+
+    """
     x1_sq = torch.sum(txt_embed * txt_embed,dim=1).reshape([-1, 1])
     x2_sq = torch.sum(img_embed * img_embed,dim=1).reshape([1, -1])
     cos_sim = torch.matmul(txt_embed, img_embed.t())
     return torch.sqrt(x1_sq - 2 * cos_sim + x2_sq)
 
+
 def bidirectional_ranking_loss(img_embed, txt_embed,
                                pos_triplet_bool, neg_triplet_bool,
                                batch_size, img_loss_factor=1.5, margin=0.05):
+    """
     
+    Parameters
+    ----------
+    img_embed : torch.Tensor
+        [batch_size, 2048].
+    txt_embed : torch.Tensor
+        [batch_size*5, 100].
+    pos_triplet_bool : torch.Tensor
+        Byte tensor with Trues for positive img-comment pairs.
+    neg_triplet_bool : torch.Tensor
+        Byte tensor with Trues for negative img-comment pairs.
+    batch_size : int.
+    img_loss_factor : float, optional
+        Weighting of img_loss. The default is 1.5.
+    margin : float, optional
+        Target Margin between positive-negative img-comment pairs.
+        The default is 0.05.
+
+    Returns
+    -------
+    loss : torch.Tensor
+        Loss between image embedding and text embedding.
+
+    """
+    
+    # Calculate the pdistance between embedding inputs
     cos_sim = pdist_loss(img_embed, txt_embed)
     
+    # Select k triplets with greatest loss to backpropagate
     max_k = min(10, batch_size-1)
     
-    #Image loss
+    # Determine positive/negative pairs
     pos_pair_dist = torch.masked_select(cos_sim, pos_triplet_bool).reshape([batch_size*5,1])
     neg_pair_dist = torch.masked_select(cos_sim, neg_triplet_bool).reshape([batch_size*5,-1])
-
+    
+    # Calculate loss for triplets wrt to (txt, img_pos, img_neg)
     img_loss = torch.clamp(margin + pos_pair_dist - neg_pair_dist, 0, 1e6)
     img_loss  = torch.topk(img_loss, max_k)[0].mean()
 
+    # Determine positive/negative pairs
     neg_pair_dist = torch.masked_select(cos_sim.t(), neg_triplet_bool.t()).reshape([batch_size, -1])
     neg_pair_dist = neg_pair_dist.repeat([1,5]).reshape([batch_size * 5, -1])
-
+    
+    # Calculate loss for triplets wrt to (img, txt_pos, txt_neg)
     sent_loss = torch.clamp(margin + pos_pair_dist - neg_pair_dist, 0, 1e6)
     sent_loss  = torch.topk(sent_loss, max_k)[0].mean()
 

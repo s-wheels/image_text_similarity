@@ -28,6 +28,22 @@ class EmbeddingModel(nn.Module):
     
     
 def create_models(gpus=1):
+    """
+
+    Parameters
+    ----------
+    gpus : int, optional
+        How many GPUs to use. The default is 1.
+
+    Returns
+    -------
+    resnet_model : torch.nn.parallel.data_parallel.DataParallel
+        Pretrained model which outputs image features.
+    similarity_model : EmbeddingModel
+        Similarity model from EmbeddingModel.
+    device : gpu index/indices to compute on
+
+    """
     resnet_model = models.resnet50(pretrained=True)
     resnet_model = nn.Sequential(*(list(resnet_model.children())[:-1]))
     device, gpu_indices = get_devices(gpus)

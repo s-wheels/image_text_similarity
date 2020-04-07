@@ -176,15 +176,15 @@ def sif_embeddings(comment_lists, corpus_vocab_count, corpus_vocab_prob, vocab_e
     Parameters
     ----------
     comment_lists : list
-        DESCRIPTION.
+        Nested list of comments.
     corpus_vocab_count : pandas.Series
-        DESCRIPTION.
+        Series containing vocab and number of instances in Flickr30K dataset.
     corpus_vocab_prob : Pandas.Series
-        DESCRIPTION.
+        Series containing vocab and probability of vocab in Flickr30K dataset.
     vocab_embeddings : torch.Tensor
-        DESCRIPTION.
+        GloVe embeddings of Flickr30K vocab.
     alpha : float, optional
-        DESCRIPTION. The default is 1e-3.
+        The default is 1e-3.
 
     Returns
     -------
