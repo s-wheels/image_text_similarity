@@ -13,26 +13,25 @@ Image/String can be changed within the script
 
 ## Report
 
+The approach taken in this respository is based upon that in [1].
 
+First, precomputed image features and precomputed text features are computed.
+
+* The image features were computed using ResNet50 which had been pretrained on ImageNet [2]. The last layer of the network was removed to allow the information contained in the image features before the FC classification layers to be used by the similarity network.
+
+* The text features were computer using GloVe embeddings [3] which were then converted to sentence embeddings using the method described in [4].
+
+Second, the similarity network was trained using bidirectional ranking loss on triplets to increase the cosine similarity between positive pairs over negative pairs. This created a shared embedding space into which both the image and text features were transformed using the method in [1].
 
 References:
 
-* [1] Wang, Liwei
-Li, Yin
-Huang, Jing
-Lazebnik, Svetlana. Learning Two-Branch Neural Networks for Image-Text Matching Tasks. IEEE Transactions on Pattern Analysis and Machine Intelligence
+* [1] Liwei Wang, Yin Li, Jing Huang, Svetlana Lazebnik. Learning Two-Branch Neural Networks for Image-Text Matching Tasks. IEEE Transactions on Pattern Analysis and Machine Intelligence. 2018.
 
-* [2] Arora, Sanjeev
-Liang, Yingyu
-Ma, Tengyu. A simple but Tough to Beat Baseline for Sentence embeddings. ICLR, 2016.
+* [2] Kaiming He, Xiangqu Zhang, Shaoqing Ren, Jian Sun. Deep residual learning for image recognition. Microsoft Research. 2015.
 
-* [3] Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014. GloVe: Global Vectors for Word Representation.
+* [3] Jeffrey Pennington, Richard Socher, and Christopher D. Manning. GloVe: Global Vectors for Word Representation. 2014.
 
-
-* [4] He, Kaiming
-Zhang, Xiangqu
-Ren, Shaoqing
-Sun, Jian. Deep residual learning for image recognition. Microsoft Research.
+* [4] Sanjeev Arora, Yingyu Liang, Tengyu Ma. A Simple but Tough to Beat Baseline for Sentence embeddings. ICLR, 2017.
 
 
 ## Challenges
