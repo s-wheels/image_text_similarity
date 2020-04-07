@@ -44,7 +44,7 @@ def main():
     img_embed, txt_embed = similarity_model(img_features, txt_features)
 
     similarity_score = torch.matmul(txt_embed, img_embed.t())
-    print(similarity_score)
+    print("Image: ", img_name, " | Text: ", string, " | Similarity: ", similarity_score.item())
     
     return similarity_score
 
