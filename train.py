@@ -5,25 +5,22 @@ import time
 import subprocess
 
 import torch
-import torch.nn as nn
-from torchvision import transforms, models
+from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 
 import pandas as pd
-from model import EmbeddingModel
+from embedding_model import create_models
 from PIL import Image
 
 
-def main():
+def main(epochs=20, batch_size=10):
 
-    epochs = 40
 
     # Get the Resnet model for image features and the Similarity model for embedding
     resnet_model, similarity_model, device = create_models()
     optimizer = torch.optim.SGD(similarity_model.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, 0.794)
 
-    batch_size = 10
     comment_batch = batch_size * 5
 
     # Create image transforms for augmentation and processing by Resnet
@@ -164,42 +161,56 @@ def main():
 
     final_model_path = "model_backups/similarity_model_final.pt"
     print("Saving final model: ", final_model_path)
-    torch.save(similarity_model.state_dict(), final_model_path)
+    torch.save(similarity_model.state_dict(), final_model_path) 
 
-def get_devices(max_devices=1):
-    """
-    ARGS: max_devices | int | number of devices required
-    RETURNS: devices | torch.device or [torch.device,...] | cpu or gpus with most free memory 
-    """
-    
-    if torch.cuda.is_available():
-        gpu_list = get_gpu_memory_map()
-        gpu_list.sort(key=lambda tup: tup[1], reverse=True)
-        gpu_indices = [i[0] for i in gpu_list[:max_devices]]
-        devices = [torch.device(i) for i in gpu_indices]
-        if len(devices)==1:
-            devices=devices[0]
-    else:
-        devices = torch.device("cpu")
-        gpu_indices = None
-        
-        
-    return devices, gpu_indices
 
-def get_gpu_memory_map():
-    """Get the free amount of memory on gpus.
-    RETURNS: gpu_memory_map | list | [[device id, free mem in MB],...]
-    """
+
+def get_triplet_bool(batch_size):
     
-    result = subprocess.check_output(
-        [
-            "nvidia-smi", "--query-gpu=memory.free",
-            "--format=csv,nounits,noheader"
-        ], encoding="utf-8")
-    # Convert lines into a dictionary
-    gpu_memory = [int(x) for x in result.strip().split("\n")]
-    gpu_memory_map = list(zip(range(len(gpu_memory)), gpu_memory))
-    return gpu_memory_map
+    pos_triplet_boolean_mask = torch.zeros([batch_size, batch_size*5])
+
+    for i in range(batch_size):
+        pos_start = i * 5
+        pos_end = pos_start + 5
+        for j in range(pos_start,pos_end):
+            pos_triplet_boolean_mask[i,j]=1
+    
+    pos_triplet_boolean_mask = pos_triplet_boolean_mask.t()
+    neg_triplet_boolean_mask = (pos_triplet_boolean_mask * -1) + 1
+    
+    return pos_triplet_boolean_mask.byte(), neg_triplet_boolean_mask.byte()
+
+def pdist_loss(img_embed, txt_embed):
+    x1_sq = torch.sum(txt_embed * txt_embed,dim=1).reshape([-1, 1])
+    x2_sq = torch.sum(img_embed * img_embed,dim=1).reshape([1, -1])
+    cos_sim = torch.matmul(txt_embed, img_embed.t())
+    return torch.sqrt(x1_sq - 2 * cos_sim + x2_sq)
+
+def bidirectional_ranking_loss(img_embed, txt_embed,
+                               pos_triplet_bool, neg_triplet_bool,
+                               batch_size, img_loss_factor=1.5, margin=0.05):
+    
+    cos_sim = pdist_loss(img_embed, txt_embed)
+    
+    max_k = min(10, batch_size-1)
+    
+    #Image loss
+    pos_pair_dist = torch.masked_select(cos_sim, pos_triplet_bool).reshape([batch_size*5,1])
+    neg_pair_dist = torch.masked_select(cos_sim, neg_triplet_bool).reshape([batch_size*5,-1])
+
+    img_loss = torch.clamp(margin + pos_pair_dist - neg_pair_dist, 0, 1e6)
+    img_loss  = torch.topk(img_loss, max_k)[0].mean()
+
+    neg_pair_dist = torch.masked_select(cos_sim.t(), neg_triplet_bool.t()).reshape([batch_size, -1])
+    neg_pair_dist = neg_pair_dist.repeat([1,5]).reshape([batch_size * 5, -1])
+
+    sent_loss = torch.clamp(margin + pos_pair_dist - neg_pair_dist, 0, 1e6)
+    sent_loss  = torch.topk(sent_loss, max_k)[0].mean()
+
+    loss = (img_loss_factor * img_loss) + sent_loss
+    
+    return loss
+
 
 class Flickr30kImageDataset(Dataset):
     """Flickr30K Image dataset"""
@@ -239,69 +250,8 @@ class Flickr30kCommentDataset(Dataset):
         
         txt_features = self.txt_features[idx]
                 
-        return txt_features        
-    
-
-def create_models(gpus=1):
-    resnet_model = models.resnet50(pretrained=True)
-    resnet_model = nn.Sequential(*(list(resnet_model.children())[:-1]))
-    device, gpu_indices = get_devices(gpus)
-    resnet_model = nn.DataParallel(resnet_model, device_ids=gpu_indices)
-    resnet_model = resnet_model.to(device)
-    resnet_model.eval()
-    
-    similarity_model = EmbeddingModel()
-    similarity_model = nn.DataParallel(similarity_model, device_ids=gpu_indices)
-    similarity_model = similarity_model.to(device)
-
-    return resnet_model, similarity_model, device    
+        return txt_features       
 
 
-
-def get_triplet_bool(batch_size):
-    
-    pos_triplet_boolean_mask = torch.zeros([batch_size, batch_size*5])
-
-    for i in range(batch_size):
-        pos_start = i * 5
-        pos_end = pos_start + 5
-        for j in range(pos_start,pos_end):
-            pos_triplet_boolean_mask[i,j]=1
-    
-    pos_triplet_boolean_mask = pos_triplet_boolean_mask.t()
-    neg_triplet_boolean_mask = (pos_triplet_boolean_mask * -1) + 1
-    
-    return pos_triplet_boolean_mask.byte(), neg_triplet_boolean_mask.byte()
-
-def cosine_similarity(img_embed, txt_embed):
-    x1_sq = torch.sum(txt_embed * txt_embed,dim=1).reshape([-1, 1])
-    x2_sq = torch.sum(img_embed * img_embed,dim=1).reshape([1, -1])
-    cos_sim = torch.matmul(txt_embed, img_embed.t())
-    return torch.sqrt(x1_sq - 2 * cos_sim + x2_sq)
-
-def bidirectional_ranking_loss(img_embed, txt_embed,
-                               pos_triplet_bool, neg_triplet_bool,
-                               batch_size, img_loss_factor=1.5, margin=0.05):
-    
-    cos_sim = cosine_similarity(img_embed, txt_embed)
-    
-    max_k = min(10, batch_size-1)
-    
-    #Image loss
-    pos_pair_dist = torch.masked_select(cos_sim, pos_triplet_bool).reshape([batch_size*5,1])
-    neg_pair_dist = torch.masked_select(cos_sim, neg_triplet_bool).reshape([batch_size*5,-1])
-
-    img_loss = torch.clamp(margin + pos_pair_dist - neg_pair_dist, 0, 1e6)
-    img_loss  = torch.topk(img_loss, max_k)[0].mean()
-
-    neg_pair_dist = torch.masked_select(cos_sim.t(), neg_triplet_bool.t()).reshape([batch_size, -1])
-    neg_pair_dist = neg_pair_dist.repeat([1,5]).reshape([batch_size * 5, -1])
-
-    sent_loss = torch.clamp(margin + pos_pair_dist - neg_pair_dist, 0, 1e6)
-    sent_loss  = torch.topk(sent_loss, max_k)[0].mean()
-
-    loss = (img_loss_factor * img_loss) + sent_loss
-    
-    return loss
-
-if __name__ == "__main__"
+if __name__ == "__main__":
+    main()

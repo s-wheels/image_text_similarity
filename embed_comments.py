@@ -7,24 +7,22 @@ from sklearn.decomposition import TruncatedSVD
 
 
 def main(labels_file="../data/flickr30k_images/results.csv",
-         output_file="comment_embeddings_pc.pt"):
+         output_file="comment_embeddings/comment_embeddings_pc.pt"):
     """
-    Takes in 
+    Takes in Flickr30k labels and computes comment embeddings
+    using GloVe for word embeddings and the SIF weighted to transform
+    these to a comment embedding.
 
     Parameters
     ----------
-    labels_file : TYPE, optional
-        DESCRIPTION. The default is "../data/flickr30k_images/results.csv".
-
-    Returns
-    -------
-    None.
+    labels_file : string, optional
+        Location of flickr30k labels. The default is "../data/flickr30k_images/results.csv".
 
     """
     #Load up the csv file with labels
     labels_df = pd.read_csv(labels_file, sep="|")
     labels_df = preprocess_comments(labels_df)
-    flat_comment_srs = create_flat_comments_series(labels_df)
+    comment_lists, flat_comment_srs = create_flat_comments_series(labels_df)
     
     #Determine the corpus and counts for each word
     corpus_vocab = sorted(flat_comment_srs.unique())
@@ -51,16 +49,14 @@ def main(labels_file="../data/flickr30k_images/results.csv",
     vocab_embeddings = torch.stack(vocab_embeddings_refined)
     corpus_vocab = pd.Series(corpus_vocab_refined)
     corpus_vocab_count = pd.Series(data=corpus_vocab.map(corpus_count).values, index=corpus_vocab.values)
-    corpus_vocab_prob = corpus_vocab_count/sum(corpus_vocab_count)
+    corpus_vocab_prob = corpus_vocab_count/sum(corpus_vocab_count)    
     
     comment_embeddings = sif_embeddings(comment_lists, corpus_vocab_count, corpus_vocab_prob, vocab_embeddings)
     comment_embeddings_pc = remove_pc(comment_embeddings)
     torch.save(comment_embeddings_pc, output_file)
-    
-    pass
 
 
-def preprocess_comments(labels_df):
+def preprocess_comments(input_str, input_type='dataframe'):
     """
 
     Parameters
@@ -74,15 +70,23 @@ def preprocess_comments(labels_df):
         DataFrame containing column with comments processed to work with GloVe embeddings.
 
     """
+    alter_strings = ["blond-hair", "red-hair", "short-sleeve", "long-sleeve", "?", "+", "(", ")"]
+    replace_strings = ["blond hair", "red hair", "short sleeve", "long sleeve", "", "", "", ""]
     
-    #Pre-process comments before input to GloVe
-    labels_df["comment"] = labels_df["comment"].str.lstrip().str.rstrip(" .").str.lower().str.replace("(", "").str.replace(")","")
-    alter_strings = ["blond-hair", "red-hair", "short-sleeve", "long-sleeve", "?","+"]
-    replace_strings = ["blond hair", "red hair", "short sleeve", "long sleeve", "",""]
-    for i in range(len(replace_strings)):
-        labels_df["comment"] = labels_df["comment"].str.replace(alter_strings[i], replace_strings[i])
-        
-    return labels_df
+    if input_type == 'dataframe':
+
+        #Pre-process comments before input to GloVe
+        input_str["comment"] = input_str["comment"].str.lstrip().str.rstrip(" .").str.lower()
+
+        for i in range(len(replace_strings)):
+            input_str["comment"] = input_str["comment"].str.replace(alter_strings[i], replace_strings[i])
+            
+    else:
+        input_str = input_str.lower().replace(' .', '').strip()
+        for i in range(len(replace_strings)):
+            input_str = input_str.replace(alter_strings[i], replace_strings[i])
+
+    return input_str
 
 
 def create_flat_comments_series(labels_df):
@@ -102,7 +106,7 @@ def create_flat_comments_series(labels_df):
     
     
     #Split up words in comments and filter out empty strings
-    comment_lists = list(labels_csv["comment"].str.split(" ").values)
+    comment_lists = list(labels_df["comment"].str.split(" ").values)
     #Create a nested list for comments
     flat_comment_list = []
     comment_lists_refined = []
@@ -112,7 +116,7 @@ def create_flat_comments_series(labels_df):
             flat_comment_list.append(item)
     comment_lists = comment_lists_refined
     
-    return pd.Series(flat_comment_list)
+    return comment_lists, pd.Series(flat_comment_list)
 
 def compute_pc(X,npc=1):
     """
@@ -228,5 +232,5 @@ def sif_embeddings(comment_lists, corpus_vocab_count, corpus_vocab_prob, vocab_e
     return comment_embeddings[1:]
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     main()
