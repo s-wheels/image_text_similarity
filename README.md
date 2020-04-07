@@ -1,13 +1,13 @@
 # image_text_similarity
 
 Install the environment in the pytorch-110.yml file:
-
+```
 conda env create -f pytorch-110.yml --name img_txt_sim
-
+```
 To compute the similarity run:
-
+```
 python3 predict.py
-
+```
 Image/String can be changed within the script
 
 References:
