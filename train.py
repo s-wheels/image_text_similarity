@@ -44,7 +44,7 @@ def main(epochs=20, batch_size=10):
 
     # Build the datasets and dataloaders for [images, comments] for both [train, test]
 
-    flickr_train_image_dataset = Flickr30kImageDataset(labels_file="labels_train_df.pkl",
+    flickr_train_image_dataset = Flickr30kImageDataset(labels_file="pandas_objects/labels_train_df.pkl",
                                                        img_dir="../data/flickr30k_images/train",
                                                        transform=train_transform)
 
@@ -53,15 +53,15 @@ def main(epochs=20, batch_size=10):
                                                num_workers=batch_size,
                                                drop_last=True)
 
-    flickr_train_comment_dataset = Flickr30kCommentDataset(labels_file="labels_train_df.pkl",
-                                                           txt_features_file="comment_train_features_pc.pt")
+    flickr_train_comment_dataset = Flickr30kCommentDataset(labels_file="pandas_objects/labels_train_df.pkl",
+                                                           txt_features_file="comment_embeddings/comment_train_features_pc.pt")
 
     flickr_train_comment_dataloader = DataLoader(flickr_train_comment_dataset,
                                                  batch_size=comment_batch,
                                                  num_workers=batch_size,
                                                  drop_last=True)
 
-    flickr_test_image_dataset = Flickr30kImageDataset(labels_file="labels_test_df.pkl",
+    flickr_test_image_dataset = Flickr30kImageDataset(labels_file="pandas_objects/labels_test_df.pkl",
                                                        img_dir="../data/flickr30k_images/test",
                                                        transform=test_transform)
 
@@ -70,8 +70,8 @@ def main(epochs=20, batch_size=10):
                                               num_workers=batch_size,
                                               drop_last=True)
 
-    flickr_test_comment_dataset = Flickr30kCommentDataset(labels_file="labels_test_df.pkl",
-                                                           txt_features_file="comment_test_features_pc.pt")
+    flickr_test_comment_dataset = Flickr30kCommentDataset(labels_file="pandas_objects/labels_test_df.pkl",
+                                                           txt_features_file="comment_embeddings/comment_test_features_pc.pt")
 
     flickr_test_comment_dataloader = DataLoader(flickr_test_comment_dataset,
                                                 batch_size=comment_batch,
