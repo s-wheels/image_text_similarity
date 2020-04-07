@@ -1,18 +1,7 @@
 # image_text_similarity
 
+Install the environment in the pytorch-110.yml file.
 
-Dependencies:
-torch
-from torchvision import transforms
-from embedding_model import create_models
-from embed_comments import preprocess_comments
-
-from PIL import Image
-
-from torchnlp.encoders.text import WhitespaceEncoder
-from torchnlp.word_to_vector import GloVe
-
-import pandas as pd
 
 References:
 
