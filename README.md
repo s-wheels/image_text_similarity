@@ -23,7 +23,7 @@ First, precomputed image features and precomputed text features are computed.
 
 Second, the similarity network was trained using bidirectional ranking loss on triplets to increase the cosine similarity between positive pairs over negative pairs. This created a shared embedding space into which both the image and text features were transformed using the method in [1].
 
-References:
+### References:
 
 * [1] Liwei Wang, Yin Li, Jing Huang, Svetlana Lazebnik. Learning Two-Branch Neural Networks for Image-Text Matching Tasks. IEEE Transactions on Pattern Analysis and Machine Intelligence. 2018.
 
