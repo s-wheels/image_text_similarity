@@ -15,7 +15,7 @@ import pandas as pd
 def main():
     # String must have spaces between words and punctuation
     string = 'A dog on grass .'
-    img_name = 'dog.jpg'
+    img_name = 'images/dog.jpg'
     model_path = 'model_backups/similarity_model_final.pt'
 
     txt_features = get_comment_embed(string)
