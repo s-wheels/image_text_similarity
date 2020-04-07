@@ -38,7 +38,7 @@ def main():
     img_features = img_features.reshape(1, 2048)
     txt_features = txt_features.reshape(1,100)
 
-    similarity_model.load_state_dict(torch.load(model_path))
+    similarity_model.load_state_dict(torch.load(model_path, map_location=device))
     similarity_model.to(device)
     similarity_model.eval()
     img_embed, txt_embed = similarity_model(img_features, txt_features)
