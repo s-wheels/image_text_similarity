@@ -34,6 +34,8 @@ Second, the similarity network was trained using bidirectional ranking loss on t
 
 - LOSS FUNCTION: Bidirectional ranking loss on the cosine similarity between the two embeddings. (Enforces that positive pairs should have higher similarity than negative pairs).
 
+- OPTIMISER: Stochastic Gradient Descent is used for simplicity and produces good enough results.
+
 
 ### References:
 
