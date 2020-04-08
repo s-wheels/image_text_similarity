@@ -26,10 +26,11 @@ Second, the similarity network was trained using bidirectional ranking loss on t
 ### Similarity Network
 
 - INPUTS: Pretrained Image and Sentence Features
- - 2 Fully Connected Layers per input.
- - Uses ReLU after the first FC layer to capture non-linearity.
- - Batch Norm after the second FC layer, to regularise and stabilise training.
- - Normalisation after the second output layer which enforces equivalence between the Euclidean distance and Cosine similarity.
+  - 2 Fully Connected Layers per input.
+  - Uses ReLU after the first FC layer to capture non-linearity.
+  - Batch Norm after the second FC layer, to regularise and stabilise training.
+  - Normalisation after the second output layer which enforces equivalence between the Euclidean distance and Cosine similarity.
+ 
 - OUTPUTS: Two embeddings one of the image features and one of the sentence features.
 
 - LOSS FUNCTION: Bidirectional ranking loss on the cosine similarity between the two embeddings. (Enforces that positive pairs should have higher similarity than negative pairs).
