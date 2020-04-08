@@ -51,3 +51,4 @@ Second, the similarity network was trained using bidirectional ranking loss on t
 
 ## Challenges
 
+One of the major issues in the ability for the network to derive context. The network does not take into account localisation information for images, as the pretrained ResNet was trained solely for image classification. To allow this to happen, the pretrained image features would need to be changed. Initially I would like to try feeding in segmentation maps to the network, although this would require a more complex network to deal with the larger information available to it.
