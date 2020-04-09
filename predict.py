@@ -53,7 +53,7 @@ def main(string, img_name, glove_embedding):
     similarity_score = torch.matmul(txt_embed, img_embed.t())
     print("Image: ", img_name, " | Text: ", string, " | Similarity: ", similarity_score.item())
     
-    return similarity_score
+    return similarity_score.item()
 
 
 def get_comment_embed(string, glove_embedding=None, corpus_vocab_prob_file='pandas_objects/corpus_vocab_prob.pkl'):
@@ -100,10 +100,19 @@ def get_comment_embed(string, glove_embedding=None, corpus_vocab_prob_file='pand
 if __name__ == "__main__":
     
     for string in strings:
+        similarities = []
         string_list = preprocess_comments(string, input_type='string').split(" ")
         string_list = list(filter(lambda x: x != "", string_list))
         glove_embedding = GloVe(name="6B", dim=100, is_include=lambda w: w in set(string_list))
         
         for img_name in img_names:
-            main(string, img_name, glove_embedding)
+            similarities.append([img_name, main(string, img_name, glove_embedding)])
+            
+            
+        similarities.sort(key = lambda x: x[1]) 
+        similarities.reverse()
+
+        print('From most similar to least similar...')
+        for i in range(1,len(similarities)+1):
+            print('IMG: ', similarities[i-1], 'IMG RANK:', i)
 
