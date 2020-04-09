@@ -9,7 +9,8 @@ To compute the similarity run:
 ```
 python3 predict.py
 ```
-Images/Strings can be changed within the script
+1. Add images to the image directory to compute the similarity
+2. Strings can be changed within the script
 
 ## Report
 
