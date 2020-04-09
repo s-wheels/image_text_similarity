@@ -9,7 +9,7 @@ To compute the similarity run:
 ```
 python3 predict.py
 ```
-Image/String can be changed within the script
+Images/Strings can be changed within the script
 
 ## Report
 
