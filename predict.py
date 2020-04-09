@@ -1,4 +1,5 @@
 from __future__ import print_function, division
+import glob
 
 import torch
 from torchvision import transforms
@@ -13,8 +14,9 @@ from torchnlp.word_to_vector import GloVe
 import pandas as pd
 
 # String must have spaces between words and punctuation
-strings = ['a dog']
-img_names = ['cat', 'chicken', 'dog', 'man_motorbike', 'man', 'manandwoman']
+strings = ['Children and kids having fun .']
+img_names = glob.glob('images/*.jpg')
+
 
 def main(string, img_name, glove_embedding):
     
@@ -103,5 +105,5 @@ if __name__ == "__main__":
         glove_embedding = GloVe(name="6B", dim=100, is_include=lambda w: w in set(string_list))
         
         for img_name in img_names:
-            main(string, 'images/' + img_name + '.jpg', glove_embedding)
+            main(string, img_name, glove_embedding)
 
