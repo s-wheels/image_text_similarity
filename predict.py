@@ -14,7 +14,7 @@ import pandas as pd
 
 # String must have spaces between words and punctuation
 strings = ['a dog']
-img_names = ['cat', 'chicken', 'dog', 'man_motorbike', 'man', 'woman', 'manandwoman']
+img_names = ['cat', 'chicken', 'dog', 'man_motorbike', 'man', 'manandwoman']
 
 def main(string, img_name, glove_embedding):
     
