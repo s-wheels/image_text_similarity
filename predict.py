@@ -12,15 +12,14 @@ from torchnlp.word_to_vector import GloVe
 
 import pandas as pd
 
-def main():
+def main(string, img_name, glove_embedding):
     # String must have spaces between words and punctuation
-    string = 'A dog on grass .'
-    img_name = 'images/dog.jpg'
+
     
     
     model_path = 'model_backups/similarity_model_final.pt'
 
-    txt_features = get_comment_embed(string)
+    txt_features = get_comment_embed(string, glove_embedding)
 
     # Load models for calculating image features and determining similarity
     resnet_model, similarity_model, device = create_models()
@@ -54,7 +53,7 @@ def main():
     return similarity_score
 
 
-def get_comment_embed(string, corpus_vocab_prob_file='pandas_objects/corpus_vocab_prob.pkl'):
+def get_comment_embed(string, glove_embedding=None, corpus_vocab_prob_file='pandas_objects/corpus_vocab_prob.pkl'):
     """
     
     Parameters
@@ -71,11 +70,14 @@ def get_comment_embed(string, corpus_vocab_prob_file='pandas_objects/corpus_voca
         [1, 100]
 
     """
-
+    
     string_list = preprocess_comments(string, input_type='string').split(" ")
     string_list = list(filter(lambda x: x != "", string_list))
-    string_list
-    glove_embedding = GloVe(name="6B", dim=100, is_include=lambda w: w in set(string_list))
+
+    if glove_embedding==None:
+        glove_embedding = GloVe(name="6B", dim=100, is_include=lambda w: w in set(string_list))
+
+
 
     corpus_vocab_prob = pd.read_pickle(corpus_vocab_prob_file)
 
@@ -93,5 +95,15 @@ def get_comment_embed(string, corpus_vocab_prob_file='pandas_objects/corpus_voca
 
 
 if __name__ == "__main__":
-    main()
+    
+    strings = ['a dog']
+    img_names = ['cat', 'chicken', 'dog', 'man_motorbike', 'man', 'woman', 'manandwoman']
+    
+    for string in strings:
+        string_list = preprocess_comments(string, input_type='string').split(" ")
+        string_list = list(filter(lambda x: x != "", string_list))
+        glove_embedding = GloVe(name="6B", dim=100, is_include=lambda w: w in set(string_list))
+        
+        for img_name in img_names:
+            main(string, 'images/' + img_name + '.jpg', glove_embedding)
 
