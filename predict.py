@@ -14,7 +14,7 @@ from torchnlp.word_to_vector import GloVe
 import pandas as pd
 
 # String must have spaces between words and punctuation
-strings = ['Children and kids having fun .']
+strings = ['Children and kids having fun .', 'Animals , like a horse , a dog or a cat .']
 img_names = glob.glob('images/*.jpg')
 
 
