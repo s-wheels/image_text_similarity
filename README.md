@@ -54,3 +54,5 @@ Second, the similarity network was trained using bidirectional ranking loss on t
 ## Challenges
 
 One of the major issues in the ability for the network to derive context. The network does not take into account localisation information for images, as the pretrained ResNet was trained solely for image classification. To allow this to happen, the pretrained image features would need to be changed. Initially I would like to try feeding in segmentation maps to the network, although this would require a more complex network to deal with the larger information available to it.
+
+The second major issues was that although the losses could be backpropagated to the pretrained ResNet, I was unable to do so due to time/hardware constraints. The dataset it was originally trained on (ImageNet) is radically different to Flickr30K in terms of the classes. It is highly likely that allow retraining of this network would allow the ResNet to learn far more relevant features to the Flickr30k problem.
