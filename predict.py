@@ -12,10 +12,11 @@ from torchnlp.word_to_vector import GloVe
 
 import pandas as pd
 
-def main(string, img_name, glove_embedding):
-    # String must have spaces between words and punctuation
+# String must have spaces between words and punctuation
+strings = ['a dog']
+img_names = ['cat', 'chicken', 'dog', 'man_motorbike', 'man', 'woman', 'manandwoman']
 
-    
+def main(string, img_name, glove_embedding):
     
     model_path = 'model_backups/similarity_model_final.pt'
 
@@ -95,9 +96,6 @@ def get_comment_embed(string, glove_embedding=None, corpus_vocab_prob_file='pand
 
 
 if __name__ == "__main__":
-    
-    strings = ['a dog']
-    img_names = ['cat', 'chicken', 'dog', 'man_motorbike', 'man', 'woman', 'manandwoman']
     
     for string in strings:
         string_list = preprocess_comments(string, input_type='string').split(" ")
