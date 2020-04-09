@@ -11,6 +11,7 @@ python3 predict.py
 ```
 1. Add images to the image directory to compute the similarity
 2. Strings can be changed within the script
+3. By default all images in the images folder will be analysed to similarity to the strings in the script and a ranking will be produced.
 
 ## Report
 
